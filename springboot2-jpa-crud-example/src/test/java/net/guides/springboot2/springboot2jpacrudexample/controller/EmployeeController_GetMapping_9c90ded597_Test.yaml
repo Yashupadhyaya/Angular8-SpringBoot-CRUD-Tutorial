@@ -1,0 +1,45 @@
+config:
+  target: "http://dummy-api-endpoint.com"
+  phases:
+    - duration: 10
+      arrivalRate: 10
+
+scenarios:
+  - flow:
+      - get:
+          url: "/employees"
+          headers:
+            Content-Type: "application/json"
+      - expect:
+          statusCode: 200
+          body: 
+            - status: "success"
+            - data:
+                - name: "John Doe"
+                  age: 25
+                - name: "Jane Smith"
+                  age: 30
+              
+  - flow:
+      - post:
+          url: "/employees"
+          headers:
+            Content-Type: "application/json"
+          json:
+            name: "John Doe"
+      - expect:
+          statusCode: 400
+          body:
+            - status: "validation_error"
+            - message: "Missing required field: age"
+              
+  - flow:
+      - get:
+          url: "/employees"
+          headers:
+            Content-Type: "application/json"
+      - expect:
+          statusCode: 200
+          body:
+            - status: "success"
+            - data: []
