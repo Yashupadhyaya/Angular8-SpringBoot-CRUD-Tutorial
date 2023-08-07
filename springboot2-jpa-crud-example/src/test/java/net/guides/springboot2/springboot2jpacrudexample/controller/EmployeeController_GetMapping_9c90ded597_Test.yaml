@@ -1,0 +1,70 @@
+config:
+  target: "http://localhost:8080"
+  phases:
+    - duration: 10
+      arrivalRate: 1
+  defaults:
+    headers:
+      content-type: "application/json"
+
+scenarios:
+  - name: "Successful API request"
+    flow:
+      - post:
+          url: "/employees"
+          json:
+            name: "John Doe"
+            age: 25
+            department: "Marketing"
+        capture:
+          - json: "$.id"
+            as: "employeeId"
+      - get:
+          url: "/employees/{{employeeId}}"
+      - expect:
+          statusCode: 200
+          json:
+            - field: "name"
+              equals: "John Doe"
+            - field: "age"
+              equals: 25
+            - field: "department"
+              equals: "Marketing"
+
+  - name: "API request with validation failure"
+    flow:
+      - post:
+          url: "/employees"
+          json:
+            name: "Jane Smith"
+        capture:
+          - json: "$.message"
+            as: "errorMessage"
+      - expect:
+          statusCode: 400
+          json:
+            - field: "error"
+              equals: "Validation failed"
+            - field: "message"
+              equals: "{{errorMessage}}"
+
+  - name: "API request with edge case"
+    flow:
+      - post:
+          url: "/employees"
+          json:
+            name: "Special characters !$#"
+            age: 30
+            department: "Sales"
+      - think: 5000
+      - get:
+          url: "/employees"
+      - expect:
+          statusCode:
+            - 200
+            - 201
+          json:
+            - field: "name"
+              contains: "Special characters"
+            - field: "name"
+              contains: "Sales"
