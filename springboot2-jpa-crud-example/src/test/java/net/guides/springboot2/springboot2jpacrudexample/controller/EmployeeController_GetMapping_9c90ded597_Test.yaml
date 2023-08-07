@@ -1,0 +1,47 @@
+config:
+  target: "http://dummy-api-endpoint.com"
+  phases:
+    - duration: 60
+      arrivalRate: 10
+scenarios:
+  - name: "Successful API request"
+    flow:
+      - post:
+          url: "/employees"
+          json:
+            name: "John Doe"
+            age: 30
+          headers:
+            Content-Type: application/json
+        expect:
+          statusCode: 200
+          body:
+            contains:
+              - employeeId
+            
+  - name: "API request with validation failure"
+    flow:
+      - post:
+          url: "/employees"
+          json:
+            name: "Jane Smith"
+          headers:
+            Content-Type: application/json
+        expect:
+          statusCode: 400
+          body:
+            contains:
+              - error: "Required field 'age' is missing"
+            
+  - name: "API request with edge case"
+    flow:
+      - post:
+          url: "/employees"
+          json:
+            name: "特殊字符"
+          headers:
+            Content-Type: application/json
+        expect:
+          statusCode: { min: 200, max: 299 }
+          body:
+            matches: "^[a-zA-Z0-9]+$"
