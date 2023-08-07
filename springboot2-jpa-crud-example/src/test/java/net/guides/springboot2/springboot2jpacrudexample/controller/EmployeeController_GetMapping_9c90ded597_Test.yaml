@@ -1,0 +1,56 @@
+config:
+  target: "http://dummy-api-endpoint.com"
+  phases:
+    - duration: 10
+      arrivalRate: 5
+
+scenarios:
+  - name: "Successful API request"
+    flow:
+      - post:
+          url: "/employees"
+          json:
+            id: 1
+            name: "John Doe"
+          headers:
+            Content-Type: "application/json"
+        capture:
+          - json: "$.id"
+            as: "employeeId"
+      - get:
+          url: "/employees/{{ employeeId }}"
+          headers:
+            Accept: "application/json"
+        validate:
+          - statusCode: 200
+          - body:
+              - json: "$.name"
+                expect: "John Doe"
+
+  - name: "API request with validation failure"
+    flow:
+      - post:
+          url: "/employees"
+          json:
+            id: 2
+          headers:
+            Content-Type: "application/json"
+        validate:
+          - statusCode: 400
+          - body:
+              - json: "$.message"
+                expect: "Validation failed: Name is required"
+
+  - name: "API request with edge case"
+    flow:
+      - post:
+          url: "/employees"
+          jsonFile: "./special_characters_payload.json"
+          headers:
+            Content-Type: "application/json"
+        validate:
+          - statusCode:
+              min: 200
+              max: 500
+          - body:
+              - matches: ".*special_characters.*"
