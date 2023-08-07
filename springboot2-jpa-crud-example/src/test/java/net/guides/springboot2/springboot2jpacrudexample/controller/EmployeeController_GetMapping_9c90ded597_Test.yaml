@@ -1,0 +1,41 @@
+config:
+  target: "http://dummyapi.com"
+  phases:
+    - duration: 1 # 1 minute
+      arrivalRate: 5 # 5 users per second
+  defaults:
+    headers:
+      Content-Type: "application/json"
+
+scenarios:
+  - name: "Successful API request"
+    flow:
+      - post:
+          url: "/employees"
+          json:
+            name: "John Doe"
+            age: 30
+      - expect:
+          statusCode: 200
+
+  - name: "API request with validation failure"
+    flow:
+      - post:
+          url: "/employees"
+          json:
+            name: ""
+            age: 30
+      - expect:
+          statusCode: 400
+
+  - name: "API request with edge case"
+    flow:
+      - post:
+          url: "/employees"
+          json:
+            name: "Lorem Ipsum"
+            data: "Lorem Ipsum" * 10000 # Large data
+      - expect:
+          statusCode:
+            min: 200
+            max: 300
