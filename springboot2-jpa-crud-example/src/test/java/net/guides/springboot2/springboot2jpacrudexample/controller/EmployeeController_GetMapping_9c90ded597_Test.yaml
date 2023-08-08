@@ -1,0 +1,50 @@
+config:
+  target: "http://dummy-api-endpoint.com"
+
+scenarios:
+  - name: "Successful API request"
+    flow:
+      - post:
+          url: "/employees"
+          json:
+            name: "John Doe"
+            age: 30
+            salary: 5000
+          headers:
+            Content-Type: "application/json"
+        expect:
+          - statusCode: 200
+          - body:
+              - isObjectContaining: { name: "John Doe" }
+              - isObjectContaining: { age: 30 }
+              - isObjectContaining: { salary: 5000 }
+
+  - name: "API request with validation failure"
+    flow:
+      - post:
+          url: "/employees"
+          json:
+            name: "John Doe"
+          headers:
+            Content-Type: "application/json"
+        expect:
+          - statusCode: 400
+          - body:
+              - isObjectContaining: { error: "Missing required field: age" }
+
+  - name: "API request with edge case"
+    flow:
+      - post:
+          url: "/employees"
+          json:
+            name: "John Doe"
+            description: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed ultrices mauris eros, a tempus odio molestie ac."
+          headers:
+            Content-Type: "application/json"
+        expect:
+          - statusCode:
+              gte: 200
+              lte: 299
+          - body:
+              - matches: "[A-Z][a-z]+ [A-Z][a-z]+"
+              - isObjectContaining: { description: { type: "string", length: { gte: 100 } } }
