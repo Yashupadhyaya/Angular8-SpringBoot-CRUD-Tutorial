@@ -1,0 +1,63 @@
+config:
+  target: "https://dummy-api.com"
+  phases:
+    - duration: 10
+      arrivalRate: 10
+
+scenarios:
+  - name: "Successful API request"
+    flow:
+      - post:
+          url: "/employees"
+          headers:
+            Content-Type: application/json
+          json:
+            name: "John Doe"
+            age: 30
+            salary: 5000
+          capture:
+            - json: "$.id"
+              as: "employeeId"
+      - log: "Created Employee with ID: {{ employeeId }}"
+      - expect:
+          - statusCode: 200
+          - json:
+              id: "{{ employeeId }}"
+              name: "John Doe"
+              age: 30
+              salary: 5000
+
+  - name: "API request with validation failure"
+    flow:
+      - post:
+          url: "/employees"
+          headers:
+            Content-Type: application/json
+          json:
+            name: "Jane Smith"
+            age: 25
+          capture:
+            - json: "$.message"
+              as: "errorMessage"
+      - log: "Received Error Message: {{ errorMessage }}"
+      - expect:
+          - statusCode: 400
+          - json:
+              message: "Invalid request. Missing required field: salary"
+
+  - name: "API request with edge case"
+    flow:
+      - post:
+          url: "/employees"
+          headers:
+            Content-Type: application/json
+          json:
+            name: "Special Name @$%^&*()_+<>"
+            age: 40
+            salary: 10000
+      - expect:
+          - statusCode: { min: 200, max: 500 }
+          - json:
+              name: "Special Name @$%^&*()_+<>"
+              age: 40
+              salary: 10000
